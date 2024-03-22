@@ -1,0 +1,5 @@
+---
+- name: Playbook to execute ping role
+  hosts: rhel-db-servers
+  roles:
+    - pre-setup
