@@ -1,0 +1,88 @@
+---
+# tasks file for db-installi
+
+- name: Check if partition exists
+  shell: "parted /dev/sdc print | grep -q '^ 1 '"
+  register: partition_exists
+  ignore_errors: yes
+  become: yes
+
+- name: Create disk partitions
+  parted:
+    device: /dev/sdc
+    number: 1
+    label: gpt
+    state: present
+    part_start: 0%
+    part_end: 100%
+  when: partition_exists.rc != 0  
+  become: yes 
+
+
+- name: Check if response file exists
+  stat:
+    path: /mnt/u01/app/19.3.0/grid/inventory/response/grid_install.rsp
+  register: response_file_stat
+  become: yes
+
+- name: Create backup if response file exists
+  command: cp -prf /mnt/u01/app/19.3.0/grid/inventory/response/grid_install.rsp /mnt/u01/app/19.3.0/grid/inventory/response/grid_install.rsp.bkp
+  when: response_file_stat.stat.exists
+  become: yes
+
+- name: Show message and fail if response file doesn't exist
+  fail:
+    msg: "Response file does not exist"
+  when: not response_file_stat.stat.exists 
+
+- block:
+    - name: Ensure ORACLEASM_ENABLED is set to true
+      lineinfile:
+        path: /etc/sysconfig/oracleasm
+        line: "ORACLEASM_ENABLED=true"
+        regexp: "^#?\\s*ORACLEASM_ENABLED="
+        state: present
+
+    - name: Ensure ORACLEASM_UID is set to oracle
+      lineinfile:
+        path: /etc/sysconfig/oracleasm
+        line: "ORACLEASM_UID=oracle"
+        regexp: "^#?\\s*ORACLEASM_UID="
+        state: present
+
+    - name: Ensure ORACLEASM_GID is set to oinstall
+      lineinfile:
+        path: /etc/sysconfig/oracleasm
+        line: "ORACLEASM_GID=oinstall"
+        regexp: "^#?\\s*ORACLEASM_GID="
+        state: present
+
+    - name: Ensure ORACLEASM_SCANBOOT is set to true
+      lineinfile:
+        path: /etc/sysconfig/oracleasm
+        line: "ORACLEASM_SCANBOOT=true"
+        regexp: "^#?\\s*ORACLEASM_SCANBOOT="
+        state: present
+  become: yes
+
+- name: Check if ASM is already configured
+  command: oracleasm status
+  register: asm_status
+  ignore_errors: yes
+  changed_when: false
+
+- block:
+    - name: Configure ASM with oracleasm configure
+      command: oracleasm configure
+      become: yes
+      when: asm_status.rc != 0
+
+    - name: Initialize ASM with oracleasm init
+      command: oracleasm init
+      become: yes
+      when: asm_status.rc != 0
+
+    - name: Check ASM status with oracleasm status
+      command: oracleasm status
+      become: yes
+  when: asm_status.rc != 0

@@ -3,31 +3,36 @@
 - name: Ping hosts
   ping:
 
-
-- name: Create a new group if it doesn't exist
-  shell: "/usr/sbin/groupadd -g {{ item }}"
-  with_items:
-    - 501 oinstall
-    - 502 dba
-  register: group_out  
-  become: yes
-  args:
-    creates: /etc/group
-
-- name: Create a new user if it doesn't exist
-  shell: "/usr/sbin/useradd -u {{item}}"
-  with_items:
-    - 501 -g oinstall -G dba oracle
-  register: user_out  
+- name: Create oinstall group if it doesn't exist
+  group:
+    name: oinstall
+    gid: 501
+    state: present
   become: yes  
-  ignore_errors: yes
+
+- name: Create dba group if it doesn't exist
+  group:
+    name: dba
+    gid: 502
+    state: present
+  become: yes  
+
+- name: Create oracle user
+  user:
+    name: oracle
+    uid: 501
+    group: oinstall
+    groups: dba
+    state: present  
+  become: yes  
+
 
 - name: Create the Oracle Inventory Directory as 'oracle' user
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /u01/app/oraInventory
-    - chown -R oracle:oinstall /u01/app/oraInventory
-    - chmod -R 775 /u01/app/oraInventory
+    - mkdir -p /mnt/u01/app/oraInventory
+    - chown -R oracle:oinstall /mnt/u01/app/oraInventory
+    - chmod -R 775 /mnt/u01/app/oraInventory
   register: user_perm  
   become: yes
 
@@ -35,19 +40,19 @@
 - name: Creating the Oracle Grid Infrastructure Base and  Home Directory as 'oracle' user
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /u01/app/19.3.0/db
-    - mkdir -p /u01/app/19.3.0/grid
-    - chown -R oracle:oinstall /u01/app/19.3.0/db
-    - chown -R oracle:oinstall /u01/app/
-    - chmod -R 775 /u01/app/19.3.0/grid 
+    - mkdir -p /mnt/u01/app/19.3.0/db
+    - mkdir -p /mnt/u01/app/19.3.0/grid
+    - chown -R oracle:oinstall /mnt/u01/app/19.3.0/db
+    - chown -R oracle:oinstall /mnt/u01/app/
+    - chmod -R 775 /mnt/u01/app/19.3.0/grid 
   register: oracle_info
   become: yes
 
 - name: Creating Oracle Software directory
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /u01/app/oracle/software
-    - chown -R oracle:oinstall /u01/app/oracle/software
+    - mkdir -p /mnt/u01/app/oracle/software
+    - chown -R oracle:oinstall /mnt/u01/app/oracle/software
   register: oracle_soft
   become: yes  
 
@@ -71,7 +76,4 @@
         delay: 60
         timeout: 300
   become: yes
-  when: sel_data.changed == true    
-
-- name: Ping hosts
-  ping:  
+  when: sel_data.changed == true

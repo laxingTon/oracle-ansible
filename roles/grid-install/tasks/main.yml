@@ -1,0 +1,138 @@
+---
+# tasks file for grid-install
+
+
+# tasks file for pre-setup
+- name: Ping hosts
+  ping:
+
+- name: Copy file using rsync
+  synchronize:
+    src: /home/eppadmin/oracle-packages/
+    dest: /mnt/u01/app/oracle/software
+  become: yes
+
+- name: Ensure software directory exists
+  stat:
+    path: /mnt/u01/app/oracle/software
+  register: software_dir
+  become: yes
+
+ #- name: Unzip Oracle Grid Infrastructure Software
+ # unarchive:
+ #   src: /mnt/u01/app/oracle/software/LINUX.X64_193000_grid_home.zip  # Update with your actual zip file path
+ #   dest: /mnt/u01/app/19.3.0/grid
+ #   remote_src: yes
+ #   extra_opts: "-q"
+ # become: yes
+
+- name: Install required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - bc
+    - binutils
+    #- compat-libcap1
+    - compat-libstdc++-33
+    #- dtrace-utils
+    - elfutils-libelf
+    - elfutils-libelf-devel
+    - fontconfig-devel
+    - glibc
+    - glibc-devel
+    - ksh
+    - libaio
+    - libaio-devel
+    #- libdtrace-ctf-devel
+    - libXrender
+    - libXrender-devel
+    - libX11
+    - libXau
+    - libXi
+    - libXtst
+    - libgcc
+    - librdmacm-devel
+    - libstdc++
+    - libstdc++-devel
+    - libxcb
+    - make
+    - smartmontools
+    - sysstat
+  become: yes
+
+- name: Update all packages
+  yum:
+    name: "*"
+    state: latest
+  become: yes
+
+
+- name: Check if kmod-oracleasm is installed
+  command: rpm -q kmod-oracleasm
+  register: kmod_oracleasm_installed
+  changed_when: false
+  failed_when: false
+  become: yes
+
+- name: Install kmod-oracleasm
+  yum:
+    name: kmod-oracleasm
+    state: present
+  when: kmod_oracleasm_installed.rc != 0
+  become: yes
+
+- name: Check if oracleasm-support is installed
+  command: rpm -q oracleasm-support
+  register: oracleasm_support_installed
+  changed_when: false
+  failed_when: false
+  become: yes
+
+- name: Install oracleasm-support
+  command: rpm -ivh /mnt/u01/app/oracle/software/oracleasm-support-2.1.11-2.el7.x86_64.rpm
+  when: oracleasm_support_installed.rc != 0
+  become: yes
+
+- name: Check if oracleasmlib is installed
+  command: rpm -q oracleasmlib
+  register: oracleasmlib_installed
+  changed_when: false
+  failed_when: false
+  become: yes
+
+- name: Install oracleasmlib
+  command: rpm -ivh /mnt/u01/app/oracle/software/oracleasmlib-2.0.12-1.el7.x86_64.rpm
+  when: oracleasmlib_installed.rc != 0
+  become: yes
+
+
+- name: Check if oracle-database-preinstall-19c is installed
+  command: rpm -q i oracle-database-preinstall
+  register: oracle_database_preinstall_installed
+  changed_when: false
+  failed_when: false
+  become: yes
+  
+
+- name: Install oracle-database-preinstall-19c
+  yum:
+    name: /mnt/u01/app/oracle/software/oracle-database-preinstall-19c-1.0-2.el8.x86_64.rpm
+    state: present
+  when: oracle_database_preinstall_installed.rc != 0
+  become: yes  
+  
+
+- name: Check if cvuqdisk is installed
+  command: rpm -q cvuqdisk
+  register: cvuqdisk_installed
+  changed_when: false
+  failed_when: false
+  become: yes
+
+- name: Install cvuqdisk
+  yum:
+    name: /mnt/u01/app/19.3.0/grid/cv/rpm/cvuqdisk-1.0.10-1.rpm
+    state: present
+  when: cvuqdisk_installed.rc != 0
+  become: yes
