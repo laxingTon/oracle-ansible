@@ -2,6 +2,6 @@
 - name: Playbook to execute ping role
   hosts: rhel-db-servers
   roles:
-          #- pre-setup
-          #- grid-install
+    - pre-setup
+    - grid-install
     - db-install

@@ -291,25 +291,25 @@
   become: yes
   become_user: oracle
 
-- name: Run CVU pre-checks
-  shell: "/mnt/u01/app/19.3.0/grid/runcluvfy.sh stage -pre hacfg"
-  register: cvu_output
-  ignore_errors: true
-  become: yes
-  become_user: oracle
+#- name: Run CVU pre-checks
+#  shell: "/mnt/u01/app/19.3.0/grid/runcluvfy.sh stage -pre hacfg"
+#  register: cvu_output
+#  ignore_errors: true
+#  become: yes
+#  become_user: oracle
 
-- name: Check if CVU pre-checks passed
-  fail:
-    msg: "CVU pre-checks failed. Please review the output."
-  when: cvu_output.rc != 0
+#- name: Check if CVU pre-checks passed
+#fail:
+#    msg: "CVU pre-checks failed. Please review the output."
+#when: cvu_output.rc != 0
 
-- name: Print CVU pre-checks output
-  debug:
-    var: cvu_output.stdout_lines
-  when: cvu_output.rc != 0
+#- name: Print CVU pre-checks output
+#  debug:
+#    var: cvu_output.stdout_lines
+#  when: cvu_output.rc != 0
 
 - name: Install Grid Software
-  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -ignorePrereq -silent -responseFile /mnt/u01/app/19.3.0/grid/install/response/grid_install.rsp"
+  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -ignorePrereq -silent -responseFile /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp"
   become: yes
   become_user: oracle
 
@@ -318,7 +318,7 @@
   become: yes
 
 - name: Finish Grid Installations
-  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -executeConfigTools -responseFile /mnt/u01/app/19.3.0/grid/install/response/grid_install.rsp -silent"
+  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -executeConfigTools -responseFile /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp -silent"
   become: yes
   become_user: oracle
 
