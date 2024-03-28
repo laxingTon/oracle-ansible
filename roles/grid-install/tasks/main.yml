@@ -9,23 +9,23 @@
 - name: Copy file using rsync
   synchronize:
     src: /home/eppadmin/oracle-packages/
-    dest: /mnt/u01/app/oracle/software
+    dest: /u01/app/oracle/software
   become: yes
 
 - name: Ensure software directory exists
   stat:
-    path: /mnt/u01/app/oracle/software
+    path: /u01/app/oracle/software
   register: software_dir
   become: yes
 
-  #- name: Unzip Oracle Grid Infrastructure Software
-  #unarchive:
-  #  src: /mnt/u01/app/oracle/software/LINUX.X64_193000_grid_home.zip  # Update with your actual zip file path
-  #  dest: /mnt/u01/app/19.3.0/grid
-  #  remote_src: yes
-  #  extra_opts: "-q"
-  #become_user: oracle
-  #become: yes
+- name: Unzip Oracle Grid Infrastructure Software
+  unarchive:
+    src: /u01/app/oracle/software/LINUX.X64_193000_grid_home.zip  # Update with your actual zip file path
+    dest: /u01/app/19.3.0/grid
+    remote_src: yes
+    extra_opts: "-q"
+  become_user: oracle
+  become: yes
 
   
 - name: Install required packages
@@ -96,7 +96,7 @@
   become: yes
 
 - name: Install oracleasm-support
-  command: rpm -ivh /mnt/u01/app/oracle/software/oracleasm-support-2.1.11-2.el7.x86_64.rpm
+  command: rpm -ivh /u01/app/oracle/software/oracleasm-support-2.1.11-2.el7.x86_64.rpm
   when: oracleasm_support_installed.rc != 0
   become: yes
 
@@ -108,7 +108,7 @@
   become: yes
 
 - name: Install oracleasmlib
-  command: rpm -ivh /mnt/u01/app/oracle/software/oracleasmlib-2.0.12-1.el7.x86_64.rpm
+  command: rpm -ivh /u01/app/oracle/software/oracleasmlib-2.0.12-1.el7.x86_64.rpm
   when: oracleasmlib_installed.rc != 0
   become: yes
 
@@ -123,7 +123,7 @@
 
 - name: Install oracle-database-preinstall-19c
   yum:
-    name: /mnt/u01/app/oracle/software/oracle-database-preinstall-19c-1.0-2.el8.x86_64.rpm
+    name: /u01/app/oracle/software/oracle-database-preinstall-19c-1.0-2.el8.x86_64.rpm
     state: present
   when: oracle_database_preinstall_installed.rc != 0
   become: yes  
@@ -138,20 +138,20 @@
 
 - name: Install cvuqdisk
   yum:
-    name: /mnt/u01/app/19.3.0/grid/cv/rpm/cvuqdisk-1.0.10-1.rpm
+    name: /u01/app/19.3.0/grid/cv/rpm/cvuqdisk-1.0.10-1.rpm
     state: present
   when: cvuqdisk_installed.rc != 0
   become: yes
 
 - name: Check if partition exists
-  shell: "parted /dev/sdc print | grep -q '^ 1 '"
+  shell: "parted /dev/sdd print | grep -q '^ 1 '"
   register: partition_exists
   ignore_errors: yes
   become: yes
 
 - name: Create disk partitions
   parted:
-    device: /dev/sdc
+    device: /dev/sdd
     number: 1
     label: gpt
     state: present
@@ -163,13 +163,13 @@
 
 - name: Check if response file exists
   stat:
-    path: /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp
+    path: /u01/app/19.3.0/grid/install/response/gridsetup.rsp
   register: response_file_stat
   become: yes
   become_user: oracle
 
 - name: Create backup if response file exists
-  command: cp -prf /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp.bkp
+  command: cp -prf /u01/app/19.3.0/grid/install/response/gridsetup.rsp /u01/app/19.3.0/grid/install/response/gridsetup.rsp.bkp
   when: response_file_stat.stat.exists
   become: yes
   become_user: oracle
@@ -238,7 +238,7 @@
   changed_when: false
 
 - name: Create ASM disk VOT
-  command: oracleasm createdisk VOT /dev/sdc1
+  command: oracleasm createdisk VOT /dev/sdd1
   become: yes
   when: asm_disk_check.rc != 0
 
@@ -253,13 +253,13 @@
   block:
     - name: Ensure each field is present in the response file
       lineinfile:
-        path: "/mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp"
+        path: "/u01/app/19.3.0/grid/install/response/gridsetup.rsp"
         line: "{{ item.key }}={{ item.value }}"
         regexp: "^{{ item.key }}="
       loop:
-        - { key: "INVENTORY_LOCATION", value: "/mnt/u01/app/oraInventory" }
+        - { key: "INVENTORY_LOCATION", value: "/u01/app/oraInventory" }
         - { key: "oracle.install.option", value: "HA_CONFIG" }
-        - { key: "ORACLE_BASE", value: "/mnt/u01/app/oracle" }
+        - { key: "ORACLE_BASE", value: "/u01/app/oracle" }
         - { key: "oracle.install.asm.OSDBA", value: "oinstall" }
         - { key: "oracle.install.asm.OSOPER", value: "oinstall" }
         - { key: "oracle.install.asm.OSASM", value: "oinstall" }
@@ -352,7 +352,7 @@
     - "{{ grid_env_result }}"
 
 - name: Run CVU pre-checks
-  shell: "/mnt/u01/app/19.3.0/grid/runcluvfy.sh stage -pre hacfg"
+  shell: "/u01/app/19.3.0/grid/runcluvfy.sh stage -pre hacfg"
   register: cvu_output
   ignore_errors: true
   become: yes
@@ -371,26 +371,26 @@
 
 
 - name: Install Grid Software
-  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -ignorePrereq -silent -responseFile /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp"
+  shell: "/u01/app/19.3.0/grid/gridSetup.sh -ignorePrereq -silent -responseFile /u01/app/19.3.0/grid/install/response/gridsetup.rsp"
   become: yes
   become_user: oracle
   ignore_errors: yes
 
 - name: Execute root.sh
-  shell: "/mnt/u01/app/oraInventory/orainstRoot.sh"
+  shell: "/u01/app/oraInventory/orainstRoot.sh"
   become: yes
 
 - name: Execute root.sh
-  shell: "/mnt/u01/app/19.3.0/grid/root.sh"
+  shell: "/u01/app/19.3.0/grid/root.sh"
   become: yes
 
 - name: Finish Grid Installations
-  shell: "/mnt/u01/app/19.3.0/grid/gridSetup.sh -executeConfigTools -responseFile /mnt/u01/app/19.3.0/grid/install/response/gridsetup.rsp -silent"
+  shell: "/u01/app/19.3.0/grid/gridSetup.sh -executeConfigTools -responseFile /u01/app/19.3.0/grid/install/response/gridsetup.rsp -silent"
   become: yes
   become_user: oracle
 
 - name: Check Cluster Installation Status
-  shell: "/mnt/u01/app/19.3.0/grid/bin/crsctl status resource -t"
+  shell: "/u01/app/19.3.0/grid/bin/crsctl status resource -t"
   become: yes
   register: cluster_status
 

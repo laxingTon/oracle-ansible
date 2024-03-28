@@ -30,31 +30,42 @@
 - name: Create the Oracle Inventory Directory as 'oracle' user
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /mnt/u01/app/oraInventory
-    - chown -R oracle:oinstall /mnt/u01/app/oraInventory
-    - chmod -R 775 /mnt/u01/app/oraInventory
+    - chown -R oracle:oinstall /u01
+  register: u_perm
+  become: yes
+
+
+- name: Create the Oracle Inventory Directory as 'oracle' user
+  shell: "{{ item }}"
+  with_items:
+    - mkdir -p /u01/app/oraInventory
+    - chown -R oracle:oinstall /u01/app/oraInventory
+    - chmod -R 775 /u01/app/oraInventory
   register: user_perm  
   become: yes
+  become_user: oracle
 
 
 - name: Creating the Oracle Grid Infrastructure Base and  Home Directory as 'oracle' user
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /mnt/u01/app/19.3.0/db
-    - mkdir -p /mnt/u01/app/19.3.0/grid
-    - chown -R oracle:oinstall /mnt/u01/app/19.3.0/db
-    - chown -R oracle:oinstall /mnt/u01/app/
-    - chmod -R 775 /mnt/u01/app/19.3.0/grid 
+    - mkdir -p /u01/app/19.3.0/db
+    - mkdir -p /u01/app/19.3.0/grid
+    - chown -R oracle:oinstall /u01/app/19.3.0/db
+    - chown -R oracle:oinstall /u01/app/
+    - chmod -R 775 /u01/app/19.3.0/grid 
   register: oracle_info
   become: yes
+  become_user: oracle
 
 - name: Creating Oracle Software directory
   shell: "{{ item }}"
   with_items:
-    - mkdir -p /mnt/u01/app/oracle/software
-    - chown -R oracle:oinstall /mnt/u01/app/oracle/software
+    - mkdir -p /u01/app/oracle/software
+    - chown -R oracle:oinstall /u01/app/oracle/software
   register: oracle_soft
-  become: yes  
+  become: yes
+  become_user: oracle   
 
 - name: Set SELINUX to disabled
   lineinfile:
