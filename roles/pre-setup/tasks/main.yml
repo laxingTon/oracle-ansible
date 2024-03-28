@@ -77,3 +77,4 @@
         timeout: 300
   become: yes
   when: sel_data.changed == true
+
