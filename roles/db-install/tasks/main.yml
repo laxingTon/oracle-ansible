@@ -7,14 +7,14 @@
   register: software_dir
   become: yes
 
-  #- name: Unzip Oracle DB Infrastructure Software
-  #unarchive:
-  #  src: /u01/app/oracle/software/LINUX.X64_193000_db_home.zip  # Update with your actual zip file path
-  #  dest: /u01/app/19.3.0/db
-  #  remote_src: yes
-  #  extra_opts: "-q"
-  #become_user: oracle
-  #become: yes
+  - name: Unzip Oracle DB Infrastructure Software
+  unarchive:
+    src: /u01/app/oracle/software/LINUX.X64_193000_db_home.zip  # Update with your actual zip file path
+    dest: /u01/app/19.3.0/db
+    remote_src: yes
+    extra_opts: "-q"
+  become_user: oracle
+  become: yes
   
 - name: Check if response file exists
   stat:
